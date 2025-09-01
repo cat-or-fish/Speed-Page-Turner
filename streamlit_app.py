@@ -32,7 +32,7 @@ if uploaded_file:
     mat = fitz.Matrix(zoom, zoom)
     pix = page.get_pixmap(matrix=mat)
     img = Image.open(io.BytesIO(pix.tobytes("png")))
-    st.image(img, use_column_width=True)
+    st.image(img, use_container_width=True)
 
     # Auto-Weiterblättern mit st_autorefresh
     if "last_update" not in st.session_state:
