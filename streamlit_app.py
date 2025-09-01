@@ -2,6 +2,7 @@ import streamlit as st
 import fitz  # PyMuPDF
 from PIL import Image
 import io
+import time
 
 st.set_page_config(layout="wide")
 st.title("📖 PDF Speed Reader")
@@ -35,7 +36,7 @@ if uploaded_file:
 
     # Auto-Weiterblättern mit st_autorefresh
     if "last_update" not in st.session_state:
-        st.session_state.last_update = st.time()
+        st.session_state.last_update = time.time()
 
     from streamlit_autorefresh import st_autorefresh
     st_autorefresh(interval=seconds*1000, key="page_refresh")
