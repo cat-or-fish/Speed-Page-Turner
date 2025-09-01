@@ -1,6 +1,7 @@
 import streamlit as st
-from pdf2image import convert_from_bytes
+import fitz  # PyMuPDF
 from PIL import Image
+import io
 import time
 
 st.set_page_config(layout="wide")
@@ -13,20 +14,28 @@ uploaded_file = st.file_uploader("Lade eine PDF hoch", type="pdf")
 seconds = st.number_input("Sekunden pro Seite:", min_value=1, max_value=60, value=10)
 
 if uploaded_file:
-    # PDF in Bilder umwandeln
-    pages = convert_from_bytes(uploaded_file.read(), dpi=150)
+    # PDF mit PyMuPDF öffnen
+    pdf_bytes = uploaded_file.read()
+    doc = fitz.open(stream=pdf_bytes, filetype="pdf")
 
     # Session-State für Seitenindex
     if "page_index" not in st.session_state:
         st.session_state.page_index = 0
 
-    # Anzeigen der Seite
-    img = pages[st.session_state.page_index]
+    page_index = st.session_state.page_index
+    page = doc.load_page(page_index)
+
+    # Seite rendern als Bild
+    pix = page.get_pixmap()
+    img = Image.open(io.BytesIO(pix.tobytes("png")))
+
     st.image(img, use_column_width=True)
 
-    # Automatisch weiterblättern
-    st_autorefresh = st.experimental_rerun  # Simpler "Hack"
+    # Timer-basiertes Weiterblättern
+    if "last_update" not in st.session_state:
+        st.session_state.last_update = time.time()
 
-    time.sleep(seconds)
-    st.session_state.page_index = (st.session_state.page_index + 1) % len(pages)
-    st.experimental_rerun()
+    if time.time() - st.session_state.last_update > seconds:
+        st.session_state.page_index = (st.session_state.page_index + 1) % len(doc)
+        st.session_state.last_update = time.time()
+        st.experimental_rerun()
